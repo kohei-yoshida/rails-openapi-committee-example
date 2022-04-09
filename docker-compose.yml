@@ -1,0 +1,85 @@
+version: '3'
+
+services:
+  mysql:
+    container_name: rails-openapi-committee-example-mysql
+    image: mysql:8.0.25
+    command: mysqld --character-set-server=utf8mb4 --explicit_defaults_for_timestamp=true --default-authentication-plugin=mysql_native_password
+    volumes:
+      - rails_openapi_committee_example_mysql:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: P@ssw0rd
+      DB_USER: root
+      DB_PASSWORD: P@ssw0rd
+      DB_HOST: rails_openapi_committee_example
+      TZ: 'Asia/Tokyo'
+    ports:
+      - 3306:3306
+    networks:
+      - rails_openapi_committee_example_net
+  redoc:
+    container_name: rails-openapi-committee-example-redoc
+    image: redocly/redoc
+    volumes:
+      - ./:/usr/share/nginx/html/redoc:/redoc
+    working_dir: "/usr/share/nginx/html/redoc/docker/backend"
+    environment:
+      SPEC_URL: redoc/docker/backend/openapi.yml
+    ports:
+      - "3003:80"
+    networks:
+      - rails_openapi_committee_example_net
+  prism:
+    container_name: rails-openapi-committee-example-prism
+    image: stoplight/prism
+    volumes:
+      - ./docker/backend:/backend
+    command: >
+      mock -h 0.0.0.0 /backend/openapi.yml
+    ports:
+      - 3002:4010
+    networks:
+      - rails_openapi_committee_example_net
+  frontend:
+    container_name: rails-openapi-committee-example-frontend
+    build:
+      context: ./docker/frontend
+      dockerfile: Dockerfile
+    volumes:
+      - ./docker/frontend:/frontend
+      - rails_openapi_committee_example_node_modules:/frontend/node_modules
+    working_dir: "/frontend"
+    stdin_open: true
+    tty: true
+    ports:
+      - 3001:3000
+    networks:
+      - rails_openapi_committee_example_net
+  backend:
+    container_name: rails-openapi-committee-example-backend
+    build:
+      context: ./docker/backend
+      dockerfile: Dockerfile
+    volumes:
+      - ./docker/backend:/backend
+      - rails_openapi_committee_example_gems:/usr/local/bundle
+    working_dir: "/backend"
+    stdin_open: true
+    tty: true
+    depends_on:
+      - mysql
+    ports:
+      - 3000:3000
+    networks:
+      - rails_openapi_committee_example_net
+
+volumes:
+  rails_openapi_committee_example_node_modules:
+    driver: local
+  rails_openapi_committee_example_mysql:
+    driver: local
+  rails_openapi_committee_example_gems:
+    driver: local
+
+networks:
+  rails_openapi_committee_example_net:
