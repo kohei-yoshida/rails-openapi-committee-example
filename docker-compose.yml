@@ -26,7 +26,7 @@ services:
     environment:
       SPEC_URL: redoc/docker/backend/openapi.yml
     ports:
-      - "3003:80"
+      - "8080:80"
     networks:
       - rails_openapi_committee_example_net
   prism:
@@ -37,7 +37,7 @@ services:
     command: >
       mock -h 0.0.0.0 /backend/openapi.yml
     ports:
-      - 3002:4010
+      - 4010:4010
     networks:
       - rails_openapi_committee_example_net
   frontend:
@@ -47,12 +47,13 @@ services:
       dockerfile: Dockerfile
     volumes:
       - ./docker/frontend:/frontend
+      - ./docker/backend:/backend
       - rails_openapi_committee_example_node_modules:/frontend/node_modules
     working_dir: "/frontend"
     stdin_open: true
     tty: true
     ports:
-      - 3001:3000
+      - 4000:3000
     networks:
       - rails_openapi_committee_example_net
   backend:
